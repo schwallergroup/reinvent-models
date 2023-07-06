@@ -239,5 +239,41 @@ class Model:
         sequences = torch.cat(sequences, 1)
         return sequences.data, nlls
 
+    def exhaustive_beam_enumeration(self, beam_steps=3):
+        # start with beam_steps number of "start" sequences
+        start_token = torch.zeros(beam_steps, dtype(torch.long))
+        start_token[:] = self.vocabulary["^"]
+        sequences = [(start, None) for start in start_token]
+
+        for _ in range(beam_steps):
+            # store the sequences so far + 3 most probable tokens
+            temp_master_list = []
+            # for each sub-sequence in the master list, add the 3 most probable tokens
+            for sub_seq, sub_seq_hidden_state in sequences:
+                logits, sub_seq_hidden_state = self.network(sub_seq.unsqueeze(1), sub_seq_hidden_state)
+                logits = logits.squeeze(1)
+                probabilities = logits.softmax(dim=1)
+                # get the 3 most probable token indices (we don't care about the value)
+                _, top_indices = torch.topk(probabilities, 3)
+                for token_idx in top_indices:
+                    # each sub-sequence should have the top 3 tokens added and stored
+                    sub_seq_expanded = torch.concat([sub_seq, token_idx])
+                    # store the expanded sub-sequence + its new hidden state
+                    temp_tuple = (sub_seq_expanded, sub_seq_hidden_state)
+                    # populate the temp master list
+                    temp_master_list.append(temp_tuple)
+
+            # overwrite the master list with the temp master list
+            sequences = temp
+
+        # at this point, sequences contains the most probable and exhaustively enumerated token sequences
+        # decode these into SMILES
+        # first add the "end" token
+        sequences = torch.cat(sequences, 1)
+        seqs = sequences.data
+        smiles = [self.tokenizer.untokenize(self.vocabulary.decode(seq)) for seq in seqs.cpu().numpy()]
+
+        return smiles
+
     def get_network_parameters(self):
         return self.network.parameters()
