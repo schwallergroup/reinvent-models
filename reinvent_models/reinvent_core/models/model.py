@@ -241,7 +241,7 @@ class Model:
 
     def exhaustive_beam_enumeration(self, beam_steps=3):
         # start with beam_steps number of "start" sequences
-        start_token = torch.zeros(beam_steps, dtype(torch.long))
+        start_token = torch.zeros(beam_steps, dtype=torch.long)
         start_token[:] = self.vocabulary["^"]
         sequences = [(start, None) for start in start_token]
 
@@ -264,7 +264,7 @@ class Model:
                     temp_master_list.append(temp_tuple)
 
             # overwrite the master list with the temp master list
-            sequences = temp
+            sequences = temp_master_list
 
         # at this point, sequences contains the most probable and exhaustively enumerated token sequences
         # decode these into SMILES

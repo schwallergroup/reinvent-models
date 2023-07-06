@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="reinvent_models",
-    version="0.0.15rc1",
+    version="0.0.16",
     author="MolecularAI",
     author_email="patronov@gmail.com",
     description="Generative models for Reinvent",
